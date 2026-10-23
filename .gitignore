@@ -1,0 +1,39 @@
+# תיקיות בנייה
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+.idea/
+
+# לוגים (מכילים נתיבים מקומיים)
+[Ll]og/
+[Ll]ogs/
+*.log
+
+# תוצאות בדיקות
+TestResults/
+[Tt]est[Rr]esult*/
+
+# חבילות
+packages/
+*.nupkg
+node_modules/
+
+# סודות וקבצים מקומיים
+secrets.json
+appsettings.*.local.json
+.env
+.env.*
+*.pfx
+*.pem
+*.key
+
+# מערכת הפעלה
+Thumbs.db
+.DS_Store

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="TasteTogether.API/TasteTogether.API.csproj" />
+  <Project Path="TasteTogether.Core/TasteTogether.Core.csproj" />
+  <Project Path="TasteTogether.Data/TasteTogether.Data.csproj" />
+  <Project Path="TasteTogether.Service/TasteTogether.Service.csproj" />
+  <Project Path="TasteTogether.Tests/TasteTogether.Tests.csproj" Id="8cbc5e6c-02e4-4576-bc7b-6deafeb75a26" />
+</Solution>
