@@ -12,9 +12,9 @@ using TasteTogether.API.Swagger;
 using TasteTogether.API.Middleware;
 using NLog.Web;
 
-// חדש: שם מדיניות ה-CORS והכתובת היחידה שמורשית (שרת הפיתוח של הלקוח, Vite)
+// שם מדיניות ה-CORS. הכתובות המורשות מחושבות למטה
 const string ClientCorsPolicy = "Client";
-const string ClientOrigin = "http://localhost:5173";
+const string LocalClientOrigin = "http://localhost:5173";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,12 +41,26 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // יוצר נתוני דמו בהפעלה (ב-Development בלבד, ראו למטה)
 builder.Services.AddScoped<DbSeeder>();
 
-// חדש: CORS. מרשה רק למקור של הלקוח, עם כל ה-headers וה-methods.
+// CORS: מרשה רק את הכתובות של הלקוח.
+// בפיתוח: שרת Vite המקומי. בענן: הכתובת שמוגדרת בהגדרה Cors:ClientOrigin
+// (משתנה סביבה Cors__ClientOrigin). הכתובת חייבת להיות בלי / בסוף.
 // X-Correlation-Id חשוף כדי שהלקוח יוכל להציג אותו בהודעת שגיאה.
+var allowedOrigins = new List<string>();
+if (builder.Environment.IsDevelopment())
+{
+    allowedOrigins.Add(LocalClientOrigin);
+}
+
+var configuredOrigin = builder.Configuration["Cors:ClientOrigin"]?.Trim().TrimEnd('/');
+if (!string.IsNullOrWhiteSpace(configuredOrigin))
+{
+    allowedOrigins.Add(configuredOrigin);
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(ClientCorsPolicy, policy =>
-        policy.WithOrigins(ClientOrigin)
+        policy.WithOrigins(allowedOrigins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod()
             .WithExposedHeaders(RequestLoggingMiddleware.CorrelationIdHeader));
@@ -116,7 +130,7 @@ if (app.Environment.IsDevelopment())
     await scope.ServiceProvider.GetRequiredService<DbSeeder>().SeedAsync(CancellationToken.None);
 }
 
-// חדש: CORS ראשון בצנרת, כדי שגם תשובות שגיאה (400, 404, 409) יכללו את ה-headers
+// CORS ראשון בצנרת, כדי שגם תשובות שגיאה (400, 404, 409) יכללו את ה-headers
 // והדפדפן יאפשר ללקוח לקרוא את גוף השגיאה.
 app.UseCors(ClientCorsPolicy);
 
@@ -130,7 +144,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// בענן (Production) ה-HTTPS מטופל על ידי Render מחוץ לשרת, והשרת עצמו מקבל HTTP
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
