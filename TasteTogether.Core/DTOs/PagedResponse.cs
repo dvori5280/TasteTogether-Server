@@ -1,4 +1,5 @@
-﻿namespace TasteTogether.Core.DTOs;
+﻿
+namespace TasteTogether.Core.DTOs;
 
 public class PagedResponse<T>
 {

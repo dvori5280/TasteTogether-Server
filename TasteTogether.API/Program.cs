@@ -12,6 +12,9 @@ using TasteTogether.API.Swagger;
 using TasteTogether.API.Middleware;
 using NLog.Web;
 
+// חדש: שם מדיניות ה-CORS והכתובת היחידה שמורשית (שרת הפיתוח של הלקוח, Vite)
+const string ClientCorsPolicy = "Client";
+const string ClientOrigin = "http://localhost:5173";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,8 +38,20 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// חדש: יוצר נתוני דמו בהפעלה (ב-Development בלבד, ראו למטה)
+// יוצר נתוני דמו בהפעלה (ב-Development בלבד, ראו למטה)
 builder.Services.AddScoped<DbSeeder>();
+
+// חדש: CORS. מרשה רק למקור של הלקוח, עם כל ה-headers וה-methods.
+// X-Correlation-Id חשוף כדי שהלקוח יוכל להציג אותו בהודעת שגיאה.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(ClientCorsPolicy, policy =>
+        policy.WithOrigins(ClientOrigin)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithExposedHeaders(RequestLoggingMiddleware.CorrelationIdHeader));
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -90,7 +105,7 @@ builder.Services
 
 var app = builder.Build();
 
-// חדש: ב-Development בלבד, יוצרים את המסד ומריצים את ה-Migrations אם צריך, ואז יוצרים נתוני דמו
+// ב-Development בלבד, יוצרים את המסד ומריצים את ה-Migrations אם צריך, ואז יוצרים נתוני דמו
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -100,6 +115,10 @@ if (app.Environment.IsDevelopment())
 
     await scope.ServiceProvider.GetRequiredService<DbSeeder>().SeedAsync(CancellationToken.None);
 }
+
+// חדש: CORS ראשון בצנרת, כדי שגם תשובות שגיאה (400, 404, 409) יכללו את ה-headers
+// והדפדפן יאפשר ללקוח לקרוא את גוף השגיאה.
+app.UseCors(ClientCorsPolicy);
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
