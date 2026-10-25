@@ -59,6 +59,42 @@ dotnet test
 
 בדיקות המקביליות רצות על מסד נפרד (`tastetogether_tests`). הקוד מסרב לרוץ אם שם המסד אינו מכיל את המילה "test", כדי לא למחוק בטעות נתוני פיתוח. כרגע יש 148 בדיקות: שירותים עם Moq, Validation, הרשאות, Middleware, AutoMapper ותחרות על PostgreSQL אמיתי.
 
+
+## פריסה בענן
+
+הפרויקט פרוס בענן ופתוח לצפייה:
+
+- **האתר (לקוח):** https://tastetogether-client.onrender.com
+- **השרת (API):** https://tastetogether.onrender.com
+- **מסד הנתונים:** PostgreSQL ב-Neon
+
+**שימו לב:** השרת רץ בחבילה חינמית של Render ונרדם אחרי כמה דקות בלי תנועה. הכניסה הראשונה עשויה להימשך עד דקה, ואחר כך הכול מהיר.
+
+### משתמשים בענן
+
+משתמשי הדמו (`admin@tt.com` ועוד) קיימים רק בהרצה מקומית במצב Development. בענן המסד מתחיל ריק, ולכן יש להירשם באתר. פרטי חשבון מנהל לבדיקה נמסרים בנפרד ולא נשמרים בקוד או ב-README.
+
+### הגדרות הפריסה
+
+השרת (Docker, `Dockerfile` בשורש הפרויקט) מקבל את ההגדרות ממשתני סביבה ב-Render. הסודות לא נשמרים בקוד:
+
+- `ASPNETCORE_ENVIRONMENT` - `Production`
+- `ConnectionStrings__Default` - מחרוזת החיבור ל-Neon (בפורמט Npgsql, עם `SSL Mode=Require`)
+- `Jwt__Key` - מפתח חתימה ל-JWT, לפחות 32 תווים
+- `Cors__ClientOrigin` - כתובת האתר (הלקוח) המורשית ב-CORS
+
+בלקוח (Static Site) מוגדר `VITE_API_URL` עם כתובת השרת, וכלל Rewrite של `/*` אל `/index.html` עבור הניווט.
+
+### Migrations בענן
+
+ב-Production השרת לא מריץ Migrations ולא יוצר נתוני דמו (זה קורה רק ב-Development). את המסד בענן מעדכנים ידנית מהמחשב:
+
+```
+dotnet ef database update --project TasteTogether.Data --startup-project TasteTogether.API
+```
+
+עם `ASPNETCORE_ENVIRONMENT=Production` ומחרוזת החיבור של Neon מוגדרים כמשתני סביבה בחלון הטרמינל.
+
 ## משתמשי דמו (נוצרים אוטומטית בהרצה ראשונה)
 
 - **Admin:** `admin@tt.com` / `Admin123!`
